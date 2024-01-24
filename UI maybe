@@ -1,0 +1,81 @@
+import time
+import requests
+import tkinter as tk
+from tkinter import ttk
+from PIL import Image, ImageTk
+from io import BytesIO
+
+class URLCheckerApp:
+    def __init__(self, master):
+        self.master = master
+        self.master.title("URL Checker App")
+
+        self.start_button = tk.Button(master, text="Start", command=self.start_checking)
+        self.start_button.pack(pady=10)
+
+        self.sheet = ttk.Treeview(master, columns=("Status", "Response Time"))
+        self.sheet.heading("#0", text="URL")
+        self.sheet.heading("#1", text="Status")
+        self.sheet.heading("#2", text="Response Time")
+        self.sheet.pack(pady=10)
+
+        self.end_button = tk.Button(master, text="End", command=self.end_checking)
+        self.end_button.pack(pady=10)
+
+        self.active = self.load_image("active.png")
+        self.inactive = self.load_image("inactive.png")
+
+        self.checking = False
+
+    def start_checking(self):
+        if not self.checking:
+            self.checking = True
+            self.check_urls()
+
+    def end_checking(self):
+        self.checking = False
+
+    def check_urls(self):
+        for url in urls:
+            if not self.checking:
+                break
+
+            try:
+                start_time = time.time()
+                response = requests.get(url)
+                response_time = time.time() - start_time
+
+                status = "Active" if response.status_code == 200 else f"Not Active (HTTP {response.status_code})"
+                self.sheet.insert("", "end", text=url, values=(status, f"{response_time:.4f} seconds"))
+
+                # Update the sheet to show the status (tick/cross)
+                self.update_status_icon(url, response.status_code)
+
+            except requests.RequestException as e:
+                status = f"Error: {e}"
+                self.sheet.insert("", "end", text=url, values=(status, ""))
+
+            self.master.update_idletasks()
+            time.sleep(1)
+
+    def update_status_icon(self, url, status_code):
+        if status_code == 200:
+            self.sheet.set(url, "#0", image=self.active)
+        else:
+            self.sheet.set(url, "#0", image=self.inactive)
+
+    def load_image(self, image_path):
+        img = Image.open(image_path)
+        return ImageTk.PhotoImage(img)
+
+
+if __name__ == "__main__":
+    urls = [
+        'https://www.namibiansun.com/',
+        'https://www.republikein.com.na/',
+        'http://www.gracecourttake-away.com.au'
+    ]
+
+    root = tk.Tk()
+    app = URLCheckerApp(root)
+    root.mainloop()

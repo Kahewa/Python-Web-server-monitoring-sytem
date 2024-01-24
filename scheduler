@@ -1,0 +1,11 @@
+def schedule_status_check():
+    current_time = time.localtime(time.time())
+    hours = current_time.tm_hour
+    minutes = current_time.tm_min
+
+    # Check if the current time matches the scheduled times
+    if (hours == 4 and minutes == 0) or (hours == 6 and minutes == 0) or (hours == 7 and minutes == 0):
+        check_status()
+    
+    # Schedule the function to run again after a minute
+    root.after(60000, schedule_status_check)

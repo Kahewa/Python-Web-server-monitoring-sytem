@@ -33,3 +33,85 @@ def check_status():
 
     notification_var.set("Status check completed.")
     root.after(100, update_treeview)  # Schedule the update_treeview function after a short delay
+
+def update_treeview():
+    for idx, url in enumerate(urls):
+        item_id = f"row{idx}"
+        if not tree.exists(item_id):
+            create_rows()  # If the row doesn't exist, create it
+        tree.item(item_id, values=(url, status_var[idx].get(), time_var[idx].get()))
+
+def start_status_check():
+    create_rows()
+    global check_thread
+    check_thread = threading.Thread(target=check_status)
+    check_thread.start()
+
+def end_status_check():
+    global running
+    running = False
+    if check_thread.is_alive():
+        check_thread.join()
+
+def schedule_status_check():
+    current_time = time.localtime(time.time())
+    hours = current_time.tm_hour
+    minutes = current_time.tm_min
+
+    # Check if the current time matches the scheduled times
+    if (hours == 4 and minutes == 0) or (hours == 6 and minutes == 0) or (hours == 7 and minutes == 0):
+        check_status()
+    
+    # Schedule the function to run again after a minute
+    root.after(60000, schedule_status_check)
+
+def create_rows():
+    # rows for each URL in the treeview
+    for idx, url in enumerate(urls):
+        tree.insert("", "end", values=(url, "", ""), tags=(f"row{idx}",))
+
+# list of URLs
+urls = [
+    'https://www.namibiansun.com/',
+    'https://www.republikein.com.na/',
+    'http://www.gracecourttake-away.com.au/'
+]
+
+# Initialize the GUI
+root = tk.Tk()
+root.title("URL Status Checker")
+
+# Variables
+notification_var = tk.StringVar()
+notification_var.set("")
+
+status_var = [tk.StringVar() for _ in urls]
+time_var = [tk.StringVar() for _ in urls]
+
+# UI Elements
+start_button = tk.Button(root, text="Start Status Check", command=start_status_check)
+start_button.pack(pady=10)
+
+end_button = tk.Button(root, text="End Status Check", command=end_status_check)
+end_button.pack(pady=10)
+
+notification_label = tk.Label(root, textvariable=notification_var, fg="blue")
+notification_label.pack(pady=10)
+
+# Create a treeview for the grid
+columns = ("URL", "Status", "Response Time")
+tree = ttk.Treeview(root, columns=columns, show="headings")
+tree.heading("URL", text="URL")
+tree.heading("Status", text="Status")
+tree.heading("Response Time", text="Response Time")
+
+for col in columns:
+    tree.column(col, anchor="center", width=100)
+
+tree.pack(pady=10)
+
+# Run the create_rows function in the main thread to create rows initially
+create_rows()
+
+# Run the GUI
+root.mainloop()

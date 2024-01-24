@@ -1,0 +1,35 @@
+import tkinter as tk
+from tkinter import ttk
+import threading
+import time
+import requests
+
+def check_status():
+    global running
+    running = True
+    notification_var.set("Checking statuses...")
+
+    for idx, url in enumerate(urls):
+        if not running:
+            break
+
+        try:
+            start_time = time.time()
+            response = requests.get(url)
+            response_time = time.time() - start_time
+
+            if response.status_code == 200:
+                status_var[idx].set("✔")  # Checkmark for active
+            else:
+                status_var[idx].set("✘")  # X for not active
+
+            time_var[idx].set(f"{response_time:.4f} seconds")
+
+        except requests.RequestException as e:
+            status_var[idx].set("✘")  # X for not active
+            time_var[idx].set("N/A")
+            error_var.set(f"Error for {url}: {e}")
+            break
+
+    notification_var.set("Status check completed.")
+    root.after(100, update_treeview)  # Schedule the update_treeview function after a short delay
